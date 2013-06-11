@@ -1,4 +1,5 @@
 from operator import itemgetter, attrgetter
+import bisect
 import logging
 
 from ..sortedcollection import SortedCollection
@@ -39,6 +40,7 @@ class Direction(object):
         self.final_arrival_pointer = None
         self.chunks = SortedCollection(key=attrgetter('seq_start'))
         self.final_data_chunk = None
+        self.ts_start = self.ts_end = None
 
     def add(self, pkt):
         '''
@@ -60,12 +62,29 @@ class Direction(object):
             return
         # attempt to merge packet with existing chunks
         merged = False
-        for i, chunk in enumerate(self.chunks):
-            overlapped, (front, back) = chunk.merge(
-                pkt, self.create_merge_callback(pkt))
-            if overlapped:
+        callback = self.create_merge_callback(pkt)
+
+        chunk = None    # newly created or extended chunk
+        if self.chunks:
+            # Find where the new packet belongs in the list of existing chunks.
+            i = bisect.bisect(self.chunks._keys, pkt.seq_start)
+            if i > 0:
+                # See if the packet overlaps with the chunk to its left.
+                left_neighbor = self.chunks[i-1]
+                if left_neighbor.seq_end >= pkt.seq_start:
+                    chunk = left_neighbor
+            if chunk is None and i < len(self.chunks):
+                # See if the packet overlaps with the chunk to its right.
+                right_neighbor = self.chunks[i]
+                if right_neighbor.seq_start <= pkt.seq_end:
+                    chunk = right_neighbor
+
+            if chunk is not None:
+                # Add the packet to an existing (overlapping) chunk.
+                overlapped, (front, back) = chunk.merge(pkt, callback)
+                assert overlapped
                 # check if this packet bridged the gap between two chunks
-                if back and i < (len(self.chunks)-1):
+                if back and i+1 < len(self.chunks):
                     overlapped2, result2 = chunk.merge(self.chunks[i+1])
                     # if the gap was bridged, the later chunk is obsolete
                     # so get rid of it.
@@ -82,12 +101,13 @@ class Direction(object):
                     if not self.final_data_chunk:
                         self.final_data_chunk = chunk
                     self.final_arrival_pointer = self.final_data_chunk.seq_end
-                merged = True
-                break  # skip further chunks
-        if not merged:
-            # nothing overlapped with the packet
-            # we need a new chunk
-            self.new_chunk(pkt)
+
+        if chunk is None:
+            # Create a new chunk from the packet.
+            chunk = self.new_chunk(pkt, callback)
+
+        self.ts_start = pkt.ts if (self.ts_start is None) else min(self.ts_start, pkt.ts)
+        self.ts_end = pkt.ts if (self.ts_end is None) else max(self.ts_end, pkt.ts)
 
     @property
     def data(self):
@@ -160,13 +180,13 @@ class Direction(object):
         if self.chunks and not self.final_data_chunk:
             self.final_data_chunk = self.chunks[0]
 
-    def new_chunk(self, pkt):
+    def new_chunk(self, pkt, callback=None):
         '''
         creates a new tcp.Chunk for the pkt to live in. Only called if an
         attempt has been made to merge the packet with all existing chunks.
         '''
         chunk = tcp.Chunk()
-        chunk.merge(pkt, self.create_merge_callback(pkt))
+        chunk.merge(pkt, callback)
         if self.seq_start and chunk.seq_start == self.seq_start:
             self.final_data_chunk = chunk
             self.final_arrival_pointer = chunk.seq_end

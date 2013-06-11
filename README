@@ -1,4 +1,4 @@
-pcap2har: converts .pcap network capture files to HTTP Archive files.
+pcap2har: converts .pcap network capture files to HTTP Archive (HAR) files.
 
 mailing list: http://groups.google.com/group/pcap2har
 
@@ -10,9 +10,12 @@ file, and the HAR output filename. For example:
 
 ./main.py my.pcap my_pcap.har
 
-The HTTP Archive (HAR) file format specification is here:
-http://groups.google.com/group/http-archive-specification/web/har-1-1-spec?hl=en
+Version 1.2 of the HAR file format specification can be found here:
+    http://www.softwareishard.com/blog/har-12-spec/
 It is a fairly straightforward JSON format.
+
+A featureful online HAR viewer is available here:
+    http://www.softwareishard.com/har/viewer/
 
 pcap2har includes BeautifulSoup.py, by Leonard Richardson. It only uses the
 class UnicodeDammit, for unicode encoding detection. Its capabilities will be

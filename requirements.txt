@@ -1,0 +1,2 @@
+# My dpkt fork --Jordan
+-e git+git@github.com:jwgcarlson/dpkt.git@6909418feb4b2f7c2479e0434193cc5a85617b0d#egg=dpkt-dev

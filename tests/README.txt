@@ -1,5 +1,5 @@
-What we have in this director is a set of pcaps to be used as tests for
-pcap2har. Many of them exhibited specific previous bugs in pcap2har.
+What we have in this directory is a set of pcap files to be used as tests for
+pcap2har. Many of them exhibit specific previous bugs in pcap2har.
 Also included are HAR's that are expected from the pcaps. They thus 
 serve as a primitive regression test suite.
 

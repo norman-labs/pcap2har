@@ -4,12 +4,12 @@ import cStringIO
 from base64 import encodestring as b64encode
 import logging
 
-from .. import dpkt_http_replacement as dpkt_http
+import dpkt
 from ..mediatype import MediaType
 from .. import settings
 
-import common as http
-import message
+from .common import DecodingError
+from .message import Message
 
 # try to import UnicodeDammit from BeautifulSoup,
 # starting with system and defaulting to included version
@@ -24,7 +24,7 @@ except ImportError:
     log.warning('Can\'t find BeautifulSoup, unicode is more likely to be '
                 'misinterpreted')
 
-class Response(message.Message):
+class Response(Message):
     '''
     HTTP response.
     Members:
@@ -41,7 +41,7 @@ class Response(message.Message):
     '''
 
     def __init__(self, tcpdir, pointer):
-        message.Message.__init__(self, tcpdir, pointer, dpkt_http.Response)
+        super(Response, self).__init__(tcpdir, pointer, dpkt.http.Response)
         # get mime type
         if 'content-type' in self.msg.headers:
             self.mediaType = MediaType(self.msg.headers['content-type'])
@@ -89,11 +89,10 @@ class Response(message.Message):
                     )
                     self.body = gzipfile.read()
                 except zlib.error:
-                    raise http.DecodingError('zlib failed to gunzip HTTP data')
+                    raise DecodingError('zlib failed to gunzip HTTP data')
                 except:
                     # who knows what else it might raise
-                    raise http.DecodingError(
-                        'failed to gunzip HTTP data, don\'t know why')
+                    raise DecodingError('failed to gunzip HTTP data, don\'t know why')
             # handle deflate
             elif encoding == 'deflate':
                 try:
@@ -102,8 +101,7 @@ class Response(message.Message):
                     # do raw deflate. See: http://bugs.python.org/issue5784
                     self.body = zlib.decompress(self.raw_body, -15)
                 except zlib.error:
-                    raise http.DecodingError(
-                        'zlib failed to undeflate HTTP data')
+                    raise DecodingError('zlib failed to undeflate HTTP data')
             elif encoding == 'compress' or encoding == 'x-compress':
                 # apparently nobody uses this, so basically just ignore it
                 self.body = self.raw_body
@@ -117,7 +115,7 @@ class Response(message.Message):
             else:
                 # I'm pretty sure the above are the only allowed encoding types
                 # see RFC 2616 sec 3.5 (http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.5)
-                raise http.DecodingError('unknown content-encoding token: ' + encoding)
+                raise DecodingError('unknown content-encoding token: ' + encoding)
         else:
             # no compression
             self.compression = 'identity'

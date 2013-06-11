@@ -20,24 +20,25 @@ class PacketDispatcher:
         self.tcp = tcp.FlowBuilder()
         self.udp = udp.Processor()
 
-    def add(self, ts, buf, eth):
+    def add(self, timestamp, raw, packet):
         '''
-        ts = dpkt timestamp
-        buf = original packet data
-        eth = dpkt.ethernet.Ethernet, whether its real Ethernet or from SLL
+        timestamp = dpkt timestamp
+        raw = original packet data
+        packet = dpkt.Packet subclass, be it Ethernet or IP or whatever
         '''
-        #decide based on pkt.data
-        # if it's IP...
-        if (isinstance(eth.data, dpkt.ip.IP) or
-            isinstance(eth.data, dpkt.ip6.IP6)):
-            ip = eth.data
-            # if it's TCP
-            if isinstance(ip.data, dpkt.tcp.TCP):
-                tcppkt = tcp.Packet(ts, buf, eth, ip, ip.data)
-                self.tcp.add(tcppkt)
-            # if it's UDP...
-            elif isinstance(ip.data, dpkt.udp.UDP):
-                self.udp.add(ts, ip.data)
+        eth = ip = None
+        # Strip away layers until we obtain a TCP or UDP segment.
+        if isinstance(packet, dpkt.ethernet.Ethernet):
+            eth = packet
+            packet = eth.data
+        if isinstance(packet, (dpkt.ip.IP, dpkt.ip6.IP6)):
+            ip = packet
+            packet = ip.data
+
+        if isinstance(packet, dpkt.tcp.TCP):
+            self.tcp.add(tcp.Packet(timestamp, raw, eth, ip, packet))
+        elif isinstance(packet, dpkt.udp.UDP):
+            self.udp.add(timestamp, packet)
 
     def finish(self):
         #This is a hack, until tcp.Flow no longer has to be `finish()`ed

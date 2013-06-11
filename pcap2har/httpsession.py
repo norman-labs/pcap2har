@@ -23,12 +23,6 @@ class Entry(object):
     * page_ref = string
     * startedDateTime = python datetime
     * total_time = from sending of request to end of response, milliseconds
-    * time_blocked
-    * time_dnsing
-    * time_connecting
-    * time_sending
-    * time_waiting
-    * time_receiving
     '''
 
     def __init__(self, request, response):
@@ -41,24 +35,16 @@ class Entry(object):
         else:
             self.startedDateTime = datetime.utcfromtimestamp(request.ts_connect)
         # calculate other timings
-        self.time_blocked = -1
-        self.time_dnsing = -1
-        self.time_connecting = (
-            ms_from_dpkt_time_diff(request.ts_start, request.ts_connect))
-        self.time_sending = (
-            ms_from_dpkt_time_diff(request.ts_end, request.ts_start))
-        if response is not None:
-            self.time_waiting = (
-                ms_from_dpkt_time_diff(response.ts_start, request.ts_end))
-            self.time_receiving = (
-                ms_from_dpkt_time_diff(response.ts_end, response.ts_start))
-            endedDateTime = datetime.utcfromtimestamp(response.ts_end)
-            self.total_time = ms_from_dpkt_time_diff(response.ts_end, request.ts_connect)
-        else:
-            # this can happen if the request never gets a response
-            self.time_waiting = -1
-            self.time_receiving = -1
-            self.total_time = -1
+        self.timings = {
+            'blocked': 0,
+            'dns': 0,
+            'connect': ms_from_dpkt_time_diff(request.ts_start, request.ts_connect),
+            'send': ms_from_dpkt_time_diff(request.ts_end, request.ts_start),
+            'receive': ms_from_dpkt_time_diff(response.ts_end, response.ts_start) if response else -1,
+            'wait': ms_from_dpkt_time_diff(response.ts_start, request.ts_end) if response else -1,
+            'ssl': -1,
+        }
+        self.total_time = sum(t for t in self.timings.values() if t >= 0)
 
     def json_repr(self):
         '''
@@ -68,14 +54,7 @@ class Entry(object):
             'time': self.total_time,
             'request': self.request,
             'response': self.response,
-            'timings': {
-                'blocked': self.time_blocked,
-                'dns': self.time_dnsing,
-                'connect': self.time_connecting,
-                'send': self.time_sending,
-                'wait': self.time_waiting,
-                'receive': self.time_receiving
-            },
+            'timings': self.timings,
             'cache': {},
         }
         if self.startedDateTime:
@@ -92,7 +71,7 @@ class Entry(object):
         Assumes that the dns.Query represents the DNS query required to make
         the request. Or something like that.
         '''
-        self.time_dnsing = ms_from_dpkt_time(dns_query.duration())
+        self.timings['dns'] = ms_from_dpkt_time(dns_query.duration())
 
 
 class UserAgentTracker(object):

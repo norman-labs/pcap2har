@@ -12,7 +12,7 @@ class Page(object):
     * last_entry = entry, the last entry to be added
     '''
 
-    def __init__(self, pageref, entry, is_root_doc=True):
+    def __init__(self, pageref, entry):
         '''
         Creates new page with passed ref and data from entry
         '''
@@ -23,17 +23,15 @@ class Page(object):
         self.last_entry = entry
         self.user_agent = entry.request.msg.headers.get('user-agent')
         # url, title, etc.
-        if is_root_doc:
+        if is_root_document(entry):
             self.root_document = entry
-            self.url = entry.request.url
-            self.title = self.url
         else:
             # if this is a hanging referrer
             if 'referer' in entry.request.msg.headers:
                 # save it so other entries w/ the same referrer will come here
                 self.referrers.add(entry.request.msg.headers['referer'])
-            self.url = None # can't guarantee it's the referrer
-            self.title = 'unknown title'
+        self.url = entry.request.url
+        self.title = self.url
 
     def has_referrer(self, ref):
         '''
@@ -127,10 +125,7 @@ class PageTracker(object):
         '''
         Internal. Wraps creating a new pages entry. Returns the new ref
         '''
-        new_page = Page(
-            self.new_id(),
-            entry,
-            is_root_document(entry))
+        new_page = Page(self.new_id(), entry)
         self.pages.append(new_page)
         return new_page.pageref
 

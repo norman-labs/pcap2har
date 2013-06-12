@@ -1,4 +1,4 @@
-import seq
+from . import seq
 
 
 class Chunk(object):

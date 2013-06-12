@@ -1,6 +1,7 @@
 import urlparse
 
 import dpkt
+
 from .message import Message
 
 

@@ -1,15 +1,16 @@
-import gzip
-import zlib
 import cStringIO
-from base64 import encodestring as b64encode
+import gzip
 import logging
+import zlib
+from base64 import encodestring as b64encode
 
 import dpkt
-from ..mediatype import MediaType
-from .. import settings
 
 from .common import DecodingError
 from .message import Message
+from .. import settings
+from ..mediatype import MediaType
+
 
 # try to import UnicodeDammit from BeautifulSoup,
 # starting with system and defaulting to included version

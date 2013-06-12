@@ -2,6 +2,7 @@ import dpkt
 
 from ..pcaputil import *
 
+
 class Packet(object):
     '''
     Represents a TCP packet. Copied from pyper, with additions. contains

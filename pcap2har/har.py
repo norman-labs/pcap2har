@@ -2,8 +2,9 @@
 functions and classes for generating HAR data from parsed http data
 '''
 
-import http
 import json
+
+from . import http
 
 
 # json_repr for HTTP header dicts

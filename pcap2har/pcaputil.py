@@ -2,9 +2,11 @@
 Various small, useful functions which have no other home.
 '''
 
-import dpkt
 import resource
 import sys
+
+import dpkt
+
 
 # Re-implemented here only because it's missing on AppEngine.
 def inet_ntoa(packed):

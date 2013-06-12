@@ -1,7 +1,6 @@
 import dpkt
-import tcp
-import udp
 
+from . import tcp, udp
 
 class PacketDispatcher:
     '''

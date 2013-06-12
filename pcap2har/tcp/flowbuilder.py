@@ -1,18 +1,19 @@
-import flow as tcp
 import logging
+
+from .flow import Flow, NewFlowError
 
 
 class FlowBuilder(object):
     '''
-    Builds and stores tcp.Flow's from packets.
+    Builds and stores Flow's from packets.
 
-    Takes a series of tcp.Packet's and sorts them into the correct tcp.Flow's
+    Takes a series of tcp.Packet's and sorts them into the correct Flow's
     based on their socket. Exposes them in a dictionary keyed by socket. Call
-    .add(pkt) for each packet. This will find the right tcp.Flow in the dict and
+    .add(pkt) for each packet. This will find the right Flow in the dict and
     call .add() on it. This class should be renamed.
 
     Members:
-    flowdict = {socket: [tcp.Flow]}
+    flowdict = {socket: [Flow]}
     '''
 
     def __init__(self):
@@ -37,18 +38,18 @@ class FlowBuilder(object):
         if srcport == 443 or dstport == 443:
             logging.warning('https packets are ignored')
             return
-        # sort the packet into a tcp.Flow in flowdict. If NewFlowError is
+        # sort the packet into a Flow in flowdict. If NewFlowError is
         # raised, the existing flow doesn't want any more packets, so we
         # should start a new flow.
         if (src, dst) in self.flowdict:
             try:
                 self.flowdict[(src, dst)][-1].add(pkt)
-            except tcp.NewFlowError:
+            except NewFlowError:
                 self.new_flow((src, dst), pkt)
         elif (dst, src) in self.flowdict:
             try:
                 self.flowdict[(dst, src)][-1].add(pkt)
-            except tcp.NewFlowError:
+            except NewFlowError:
                 self.new_flow((dst, src), pkt)
         else:
             self.new_flow((src, dst), pkt)
@@ -64,7 +65,7 @@ class FlowBuilder(object):
         * socket: ((ip, port), (ip, port))
         * packet: tcp.Packet
         '''
-        newflow = tcp.Flow()
+        newflow = Flow()
         newflow.add(packet)
         if socket in self.flowdict:
             self.flowdict[socket].append(newflow)
@@ -80,4 +81,4 @@ class FlowBuilder(object):
                 yield flow
 
     def finish(self):
-        map(tcp.Flow.finish, self.flows())
+        map(Flow.finish, self.flows())

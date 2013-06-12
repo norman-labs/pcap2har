@@ -1,9 +1,10 @@
 import logging
+
 import dpkt
 
-import common as http
-from request import Request
-from response import Response
+from .common import Error
+from .request import Request
+from .response import Response
 from .. import settings
 
 
@@ -112,7 +113,7 @@ def gather_messages(MessageClass, tcpdir):
             msg = MessageClass(tcpdir, pointer)
         except dpkt.Error as error:  # if the message failed
             if pointer == 0:  # if this is the first message
-                raise http.Error('Invalid http')
+                raise Error('Invalid http')
             else:  # we're done parsing messages
                 logging.warning('We got a dpkt.Error %s, but we are done.' % error)
                 break  # out of the loop

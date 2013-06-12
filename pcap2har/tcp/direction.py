@@ -1,12 +1,12 @@
-from operator import itemgetter, attrgetter
 import bisect
 import logging
+from operator import itemgetter, attrgetter
 
-from ..sortedcollection import SortedCollection
+from .chunk import Chunk
+from .packet import PadPacket
 
-import packet
-import chunk as tcp
 from .. import settings
+from ..sortedcollection import SortedCollection
 
 
 class Direction(object):
@@ -185,7 +185,7 @@ class Direction(object):
         creates a new tcp.Chunk for the pkt to live in. Only called if an
         attempt has been made to merge the packet with all existing chunks.
         '''
-        chunk = tcp.Chunk()
+        chunk = Chunk()
         chunk.merge(pkt, callback)
         if self.seq_start and chunk.seq_start == self.seq_start:
             self.final_data_chunk = chunk
@@ -245,6 +245,6 @@ class Direction(object):
                              gap, prev_chunk.seq_end)
                 first_chunk_pkt = self.seq_arrival(chunk.seq_start)
                 chunk_ts = first_chunk_pkt.ts
-                pad_pkt = packet.PadPacket(prev_chunk.seq_end, gap, chunk_ts)
+                pad_pkt = PadPacket(prev_chunk.seq_end, gap, chunk_ts)
                 self.add(pad_pkt)
             prev_chunk = chunk

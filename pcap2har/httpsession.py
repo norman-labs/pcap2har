@@ -3,14 +3,14 @@ Objects for parsing a list of HTTPFlows into data suitable for writing to a
 HAR file.
 '''
 
-from datetime import datetime
-import dpkt
 import logging
+from datetime import datetime
 
-from pcaputil import ms_from_dpkt_time, ms_from_dpkt_time_diff
-from pagetracker import PageTracker
-import http
-import settings
+import dpkt
+
+from . import http, settings
+from .pcaputil import ms_from_dpkt_time, ms_from_dpkt_time_diff
+from .pagetracker import PageTracker
 
 
 class Entry(object):

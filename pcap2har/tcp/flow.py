@@ -1,11 +1,10 @@
 import logging
-import common as tcp
 
 from dpkt.tcp import TH_SYN
 
-from ..sortedcollection import SortedCollection
-import seq # hopefully no name collisions
-from direction import Direction
+from . import seq
+from .common import detect_handshake
+from .direction import Direction
 
 
 class NewFlowError(Exception):
@@ -72,7 +71,7 @@ class Flow(object):
                 self.socket = self.packets[0].socket
                 self.flush_packets() # merge all stored packets
             # check last three packets
-            elif tcp.detect_handshake(self.packets[-3:]):
+            elif detect_handshake(self.packets[-3:]):
                 # function handles packets < 3 case
                 self.handshake = tuple(self.packets[-3:])
                 self.socket = self.handshake[0].socket

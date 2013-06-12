@@ -9,12 +9,13 @@ from . import http
 
 # json_repr for HTTP header dicts
 def header_json_repr(d):
-    return [
-        {
-            'name': k,
-            'value': v
-        } for k, v in sorted(d.iteritems())
-    ]
+    headers = []
+    for name, value in sorted(d.iteritems()):
+        if isinstance(value, list):
+            headers += [{'name': name, 'value': v} for v in value]
+        else:
+            headers.append({'name': name, 'value': value})
+    return headers
 
 
 def query_json_repr(d):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 import pcap2har
 
@@ -14,6 +14,6 @@ setup(
     maintainer="Jordan Carlson",
     maintainer_email="jwgcarlson@gmail.com",
     url="https://github.com/jwgcarlson/pcap2har",
-    packages=["pcap2har"],
+    packages=find_packages(),
     scripts=["bin/pcap2har"],
 )

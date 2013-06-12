@@ -2,7 +2,7 @@ import cStringIO
 import gzip
 import logging
 import zlib
-from base64 import encodestring as b64encode
+from base64 import b64encode
 
 import dpkt
 

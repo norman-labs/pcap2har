@@ -44,14 +44,14 @@ class Entry(object):
             'wait': ms_from_dpkt_time_diff(response.ts_start, request.ts_end) if response else -1,
             'ssl': -1,
         }
-        self.total_time = sum(t for t in self.timings.values() if t >= 0)
+        #self.total_time = sum(t for t in self.timings.values() if t >= 0)
 
     def json_repr(self):
         '''
         return a JSON serializable python object representation of self.
         '''
         d = {
-            'time': self.total_time,
+            'time': sum(t for t in self.timings.values() if t >= 0),
             'request': self.request,
             'response': self.response,
             'timings': self.timings,
